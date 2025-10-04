@@ -1,47 +1,145 @@
-<!-- Copyright (C) 2023-2025 anonymous
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>PSFree-Lapse Exploit For PS4 9.00</title>
+  <link rel="icon" href="favicon.ico">
+  <style>
+    @font-face{font-family:Logging;src:url('fonts/LiberationMono-Regular.ttf') format('truetype');font-display:swap}
+    :root{--bg1:#071123;--bg2:#0b2540;--glass:rgba(255,255,255,0.04);--accent:#00d4ff;--muted:rgba(255,255,255,0.6)}
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0;font-family:Inter,system-ui,Segoe UI,Roboto,Arial;background:linear-gradient(135deg,var(--bg1),var(--bg2));color:#eaf6ff}
 
-This file is part of PSFree.
+    .container{max-width:1100px;margin:40px auto;padding:20px}
+    .header{display:flex;align-items:center;gap:14px}
+    .brand{width:72px;height:72px;border-radius:14px;background:linear-gradient(180deg,var(--accent),#0aa0c9);display:flex;align-items:center;justify-content:center;font-weight:800;color:#012;box-shadow:0 10px 40px rgba(0,0,0,0.6)}
+    h1{margin:0;font-size:20px}
+    p.lead{margin:4px 0 0;color:var(--muted);font-size:14px}
 
-PSFree is free software: you can redistribute it and/or modify
-it under the terms of the GNU Affero General Public License as
-published by the Free Software Foundation, either version 3 of the
-License, or (at your option) any later version.
+    .grid{display:grid;grid-template-columns:1fr 360px;gap:18px;margin-top:18px}
+    .card{background:linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0.01));padding:18px;border-radius:12px;border:1px solid rgba(255,255,255,0.03);box-shadow:0 12px 40px rgba(2,6,23,0.6)}
 
-PSFree is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU Affero General Public License for more details.
+    .info-list{font-size:14px;color:var(--muted);line-height:1.6}
+    a.link{color:#eaf6ff;text-decoration:underline}
 
-You should have received a copy of the GNU Affero General Public License
-along with this program.  If not, see <https://www.gnu.org/licenses/>.
--->
-<html>
-    <head>
-        <meta charset='utf-8'>
-        <title>PSFree-Lapse Exploit For PS4 9.00</title>
-        <style>
-            @font-face {
-                font-family: 'logging';
-                src: url('fonts/LiberationMono-Regular.ttf');
-            }
-            #console {
-                font-family: 'logging';
-            }
-        </style>
-        <script>
-        if (window.applicationCache.status=='0')
-        {
-          window.location.replace("cache.html");
+    /* console */
+    #console{margin-top:12px;height:320px;overflow:auto;border-radius:8px;padding:12px;background:linear-gradient(180deg,rgba(0,0,0,0.32),rgba(255,255,255,0.02));border:1px solid rgba(255,255,255,0.02);font-family:Logging,monospace;font-size:13px;color:#bfefff;line-height:1.45}
+
+    .controls{display:flex;gap:10px;margin-top:12px}
+    button{border:0;padding:10px 14px;border-radius:10px;cursor:pointer;font-weight:600}
+    .btn-primary{background:linear-gradient(180deg,var(--accent),#00a6d1);color:#012}
+    .btn-ghost{background:transparent;color:var(--muted);border:1px solid rgba(255,255,255,0.03)}
+
+    .sidebar .meta{font-size:13px;color:var(--muted)}
+    .note{margin-top:10px;color:var(--muted);font-size:13px}
+
+    @media (max-width:920px){.grid{grid-template-columns:1fr;}.sidebar{order:2}}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="brand">PS</div>
+      <div>
+        <h1>PSFree-Lapse — Installer UI</h1>
+        <p class="lead">A lightweight, user-friendly interface for the PSFree exploit cache installer (UI only).</p>
+      </div>
+    </div>
+
+    <div class="grid">
+      <main class="card">
+        <div class="info-list">
+          <strong>PSFree:</strong> A PS4 / PS5 exploit chain.<br>
+          See <a class="link" href="./about.html" data-jslicense="1">JavaScript license information</a> for source code and licensing details.
+        </div>
+
+        <div id="console" role="log" aria-live="polite"></div>
+
+        <div class="controls">
+          <button class="btn-primary" id="start">Simulate Install</button>
+          <button class="btn-ghost" id="clear">Clear</button>
+        </div>
+
+        <div class="note">Note: This UI simulates installation and preserves ApplicationCache check from the original code for compatibility with older setups.</div>
+      </main>
+
+      <aside class="sidebar">
+        <div class="card">
+          <div class="meta"><strong>License</strong><br>GNU Affero General Public License — AGPL-3.0-or-later</div>
+          <div class="note">This interface is only the front-end. The original scripts (alert.mjs, psfree.mjs, etc.) remain the authoritative implementation.</div>
+        </div>
+
+        <div class="card note">
+          <strong>Fonts</strong><br>
+          Uses LiberationMono (embedded via fonts/LiberationMono-Regular.ttf) for console fidelity. If the font is missing the browser's monospace will be used as fallback.
+        </div>
+      </aside>
+    </div>
+
+  </div>
+
+  <script>
+    // preserve original ApplicationCache redirect logic (if available)
+    try{
+      if(window.applicationCache && window.applicationCache.status === 0){
+        // use replace to avoid adding history
+        window.location.replace('cache.html');
+      }
+    }catch(e){ /* ignore in modern browsers */ }
+
+    // console helper (pretty printing + simulated progress)
+    const consoleEl = document.getElementById('console');
+    const startBtn = document.getElementById('start');
+    const clearBtn = document.getElementById('clear');
+
+    function appendLine(text){
+      const line = document.createElement('div');
+      line.textContent = text;
+      consoleEl.appendChild(line);
+      consoleEl.scrollTop = consoleEl.scrollHeight;
+    }
+
+    function simulate(){
+      const steps = [
+        'Initializing offline cache...',
+        'Scanning resources...',
+        'Preparing manifest...',
+        'Downloading chunks (0%)',
+        'Downloading chunks (25%)',
+        'Downloading chunks (48%)',
+        'Downloading chunks (71%)',
+        'Downloading chunks (89%)',
+        'Finalizing (100%)',
+        'Cache installed successfully.'
+      ];
+      let i = 0;
+      startBtn.disabled = true;
+      const t = setInterval(()=>{
+        appendLine('> ' + steps[i]);
+        i++;
+        if(i>=steps.length){
+          clearInterval(t);
+          startBtn.disabled = false;
         }
-        </script>
-    </head>
-    <body>
-        PSFree: A PS4/PS5 Exploit Chain
-        <br>
-        <br>
-        See <a href='./about.html' data-jslicense='1'>JavaScript license information</a> for the
-        source code and license.<br>
-        <pre id='console'></pre>
-    </body>
-    <script type='module' src='./alert.mjs'></script>
+      }, 600 + Math.random()*400);
+    }
+
+    startBtn.addEventListener('click', ()=>{ simulate(); });
+    clearBtn.addEventListener('click', ()=>{ consoleEl.innerHTML = ''; });
+
+    // load module script (keeps original behavior)
+    (function(){
+      const s = document.createElement('script');
+      s.type = 'module';
+      s.src = './alert.mjs';
+      s.defer = true;
+      s.onerror = ()=>{ appendLine('! failed to load alert.mjs'); };
+      document.body.appendChild(s);
+    })();
+
+    // small accessibility: announce initial state
+    appendLine('PSFree-Lapse UI ready. Click "Simulate Install" to start.');
+  </script>
+</body>
 </html>
